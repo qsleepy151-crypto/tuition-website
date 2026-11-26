@@ -21,6 +21,8 @@ footer{text-align:center;color:var(--muted);padding:24px}.notice{background:#fff
 .admin-column>h3{margin-top:0;padding-bottom:10px;border-bottom:1px solid #e2e8f0}
 @media(max-width:760px){.admin-columns{grid-template-columns:1fr}}
 
+
+.excel-import{background:#eef6ff;border:1px solid #bfdbfe;border-radius:14px;padding:16px;margin:18px 0}
 </style>
 </head>
 <body>
@@ -117,7 +119,64 @@ async function loadAdmin(){
   const tutors=rows.filter(r=>r.role==='tutor'),parents=rows.filter(r=>r.role==='parent');
   const tutorCards=tutors.map(r=>`<div class="item"><h3>Tutor · ${esc(r.name)} · ${statusBadge(r.status)}</h3><p>${esc(r.email)} · ${esc(r.phone||'')}</p><p>Subjects: ${(r.subjects||[]).map(s=>`<span class="tag">${esc(s)}</span>`).join('')||'None selected'}</p><p>Availability: ${esc(r.schedule||'Not specified')}</p><p>Introduction: ${esc(r.bio||'')}</p><div class="actions"><button onclick="setStatus('${r.id}','Approved')">Approve</button><button class="secondary" onclick="setStatus('${r.id}','Rejected')">Reject</button><button class="danger" onclick="deleteRecord('${r.id}')">Delete</button></div></div>`).join('')||'<p>No tutor registrations yet.</p>';
   const parentCards=parents.map(r=>`<div class="item"><h3>Parent · ${esc(r.name)}</h3><p>${esc(r.email)} · ${esc(r.phone||'')}</p>${(r.children||[]).map((c,i)=>`<div class="item"><h4>${i+1}. ${esc(c.name)} ${c.age?`(${esc(c.age)})`:''} · ${statusBadge(c.status||r.status||'Pending')}</h4><p>Subjects: ${(c.subjects||[]).map(s=>`<span class="tag">${esc(s)}</span>`).join('')||'None selected'}</p><p>Registration preference: ${esc(c.schedule||'Not specified')}</p><div class="actions"><button onclick="setChildStatus('${r.id}',${i},'Approved')">Approve</button><button class="secondary" onclick="setChildStatus('${r.id}',${i},'Rejected')">Reject</button></div></div>`).join('')}<div class="actions"><button class="danger" onclick="deleteRecord('${r.id}')">Delete registration</button></div></div>`).join('')||'<p>No parent registrations yet.</p>';
-  el.innerHTML=`<h3>Registrations (${rows.length})</h3><div class="admin-columns"><section class="admin-column"><h3>👩‍🏫 Tutors (${tutors.length})</h3>${tutorCards}</section><section class="admin-column"><h3>👨‍👩‍👧 Parents (${parents.length})</h3>${parentCards}</section></div><hr><section class="panel"><h3>📅 Create a tuition schedule</h3><p class="muted">Assign a lesson to a parent’s child. The schedule will appear in that parent's dashboard.</p><form id="scheduleForm"><label>Parent</label><select id="scheduleParent" required><option value="">Select a parent</option>${parents.map(p=>`<option value="${p.id}">${esc(p.name)} — ${esc(p.email)}</option>`).join('')}</select><label>Child</label><select id="scheduleChild" required><option value="">Select parent first</option></select><div class="formgrid"><div><label>Subject</label><select id="scheduleSubject" required>${subjects.map(s=>`<option>${s}</option>`).join('')}</select></div><div><label>Day or date</label><input id="scheduleDay" placeholder="e.g. Monday or 28 Nov" required></div><div><label>Start time</label><input id="scheduleStart" type="time" required></div><div><label>End time</label><input id="scheduleEnd" type="time" required></div><div><label>Tutor name</label><input id="scheduleTutor"></div><div><label>Tutor email (optional)</label><input id="scheduleTutorEmail" type="email"></div><div><label>Location / online link</label><input id="scheduleLocation" placeholder="Classroom or meeting link"></div></div><label>Notes</label><textarea id="scheduleNotes"></textarea><div class="actions"><button type="submit">Save schedule</button></div></form><div id="scheduleList"></div></section><div class="actions"><button class="secondary" onclick="logout()">Sign out</button></div>`;
+  el.innerHTML=`<section class="excel-import"><h3>📥 Import Excel data</h3><p>Upload the BrightPath Excel template to import parent/child records, tutors, class schedules and payments. Existing parent accounts are matched by email.</p><input id="excelFile" type="file" accept=".xlsx,.xls"><div class="actions"><button type="button" id="importExcelBtn">Import Excel</button></div><div id="importResult"></div></section><h3>Registrations (${rows.length})</h3><div class="admin-columns"><section class="admin-column"><h3>👩‍🏫 Tutors (${tutors.length})</h3>${tutorCards}</section><section class="admin-column"><h3>👨‍👩‍👧 Parents (${parents.length})</h3>${parentCards}</section></div><hr><section class="panel"><h3>📅 Create a tuition schedule</h3><p class="muted">Assign a lesson to a parent’s child. The schedule will appear in that parent's dashboard.</p><form id="scheduleForm"><label>Parent</label><select id="scheduleParent" required><option value="">Select a parent</option>${parents.map(p=>`<option value="${p.id}">${esc(p.name)} — ${esc(p.email)}</option>`).join('')}</select><label>Child</label><select id="scheduleChild" required><option value="">Select parent first</option></select><div class="formgrid"><div><label>Subject</label><select id="scheduleSubject" required>${subjects.map(s=>`<option>${s}</option>`).join('')}</select></div><div><label>Day or date</label><input id="scheduleDay" placeholder="e.g. Monday or 28 Nov" required></div><div><label>Start time</label><input id="scheduleStart" type="time" required></div><div><label>End time</label><input id="scheduleEnd" type="time" required></div><div><label>Tutor name</label><input id="scheduleTutor"></div><div><label>Tutor email (optional)</label><input id="scheduleTutorEmail" type="email"></div><div><label>Location / online link</label><input id="scheduleLocation" placeholder="Classroom or meeting link"></div></div><label>Notes</label><textarea id="scheduleNotes"></textarea><div class="actions"><button type="submit">Save schedule</button></div></form><div id="scheduleList"></div></section><div class="actions"><button class="secondary" onclick="logout()">Sign out</button></div>`;
+
+  document.getElementById('importExcelBtn').onclick=async()=>{
+    const file=document.getElementById('excelFile').files[0],out=document.getElementById('importResult'),btn=document.getElementById('importExcelBtn');
+    if(!file){out.innerHTML='<p class="error">Please choose your Excel file first.</p>';return;}
+    btn.disabled=true;out.textContent='Reading Excel file...';
+    try{
+      const XLSX=await import('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm');
+      const book=XLSX.read(await file.arrayBuffer(),{type:'array'});
+      const rowsOf=name=>book.Sheets[name]?XLSX.utils.sheet_to_json(book.Sheets[name],{defval:''}):[];
+      const norm=x=>String(x||'').trim().toLowerCase();
+      const parentRows=rowsOf('Parents & Children'), tutorRows=rowsOf('Tutors'), scheduleRows=rowsOf('Class Schedule'), paymentRows=rowsOf('Payments');
+      let counts={parents:0,tutors:0,schedules:0,payments:0};
+      // Parents: aggregate children by email, match registered parent accounts where possible.
+      const grouped={};
+      for(const row of parentRows){
+        const email=norm(row['Parent Email']);if(!email)continue;
+        if(!grouped[email])grouped[email]={name:String(row['Parent Name']||'').trim(),phone:String(row['Parent Phone']||'').trim(),email,children:[]};
+        const name=String(row['Child Name']||'').trim();if(!name)continue;
+        grouped[email].children.push({name,age:String(row['Child Age']||'').trim(),school:String(row['School']||'').trim(),subjects:String(row['Subjects Needed']||'').split(/[,;]+/).map(x=>x.trim()).filter(Boolean),schedule:String(row['Notes']||'').trim(),status:String(row['Registration Status']||'Pending').trim()||'Pending'});
+      }
+      for(const p of Object.values(grouped)){
+        const existing=await getDocs(query(collection(db,'registrations'),where('email','==',p.email)));
+        if(!existing.empty){
+          const d=existing.docs.find(x=>x.data().role==='parent')||existing.docs[0],data=d.data();
+          const merged=[...(data.children||[])];
+          for(const c of p.children){const idx=merged.findIndex(x=>norm(x.name)===norm(c.name));if(idx>=0)merged[idx]={...merged[idx],...c};else merged.push(c);}
+          await updateDoc(doc(db,'registrations',d.id),{name:p.name||data.name,phone:p.phone||data.phone,children:merged});
+        }else{
+          await addDoc(collection(db,'registrations'),{uid:null,role:'parent',name:p.name,email:p.email,phone:p.phone,status:'Pending',children:p.children,createdAt:serverTimestamp(),importedFromExcel:true});
+        }counts.parents++;
+      }
+      // Tutors: match by email or create admin-visible imported registration record.
+      for(const t of tutorRows){
+        const email=norm(t['Tutor Email']);if(!email)continue;
+        const payload={role:'tutor',name:String(t['Tutor Name']||'').trim(),email,phone:String(t['Phone']||'').trim(),subjects:String(t['Subjects']||'').split(/[,;]+/).map(x=>x.trim()).filter(Boolean),schedule:String(t['Availability']||'').trim(),bio:String(t['Notes']||'').trim(),status:String(t['Status']||'Pending').trim(),importedFromExcel:true};
+        const existing=await getDocs(query(collection(db,'registrations'),where('email','==',email)));
+        if(existing.empty)await addDoc(collection(db,'registrations'),{...payload,uid:null,createdAt:serverTimestamp()});
+        else {const d=existing.docs.find(x=>x.data().role==='tutor')||existing.docs[0];await updateDoc(doc(db,'registrations',d.id),payload);}
+        counts.tutors++;
+      }
+      // Schedules: match parent email to a parent registration. Imported records without an Auth UID are admin-visible only.
+      for(const s of scheduleRows){
+        const email=norm(s['Parent Email']),child=String(s['Child Name']||'').trim();if(!email||!child)continue;
+        const found=await getDocs(query(collection(db,'registrations'),where('email','==',email)));
+        const pdoc=found.docs.find(x=>x.data().role==='parent');if(!pdoc)continue;
+        const p=pdoc.data(),childObj=(p.children||[]).find(x=>norm(x.name)===norm(child));
+        await addDoc(collection(db,'schedules'),{parentUid:p.uid||null,parentDocId:pdoc.id,childIndex:(p.children||[]).findIndex(x=>norm(x.name)===norm(child)),childName:child,subject:String(s['Subject']||''),day:String(s['Day / Date']||''),startTime:String(s['Start Time']||''),endTime:String(s['End Time']||''),tutorName:String(s['Tutor Name']||''),tutorEmail:norm(s['Tutor Email']),location:String(s['Location / Online Link']||''),notes:String(s['Notes']||''),createdAt:serverTimestamp(),importedFromExcel:true});counts.schedules++;
+      }
+      for(const p of paymentRows){
+        if(!String(p['Parent Email']||'').trim())continue;
+        await addDoc(collection(db,'payments'),{parentEmail:norm(p['Parent Email']),childName:String(p['Child Name']||''),description:String(p['Subject / Description']||''),amount:String(p['Amount (RM)']||''),dueDate:String(p['Due Date']||''),paymentDate:String(p['Payment Date']||''),status:String(p['Payment Status']||'Pending'),notes:String(p['Notes']||''),createdAt:serverTimestamp(),importedFromExcel:true});counts.payments++;
+      }
+      out.innerHTML=`<div class="success">Import finished. Parent groups: ${counts.parents}; tutors: ${counts.tutors}; schedules: ${counts.schedules}; payment rows: ${counts.payments}. Reloading admin records...</div>`;
+      await loadAdmin();
+    }catch(err){out.innerHTML='<div class="error">Import failed: '+esc(err.message||err)+'</div>';}
+    finally{btn.disabled=false;}
+  };
   const parentSelect=document.getElementById('scheduleParent'),childSelect=document.getElementById('scheduleChild');
   parentSelect.onchange=()=>{const p=parents.find(x=>x.id===parentSelect.value);childSelect.innerHTML=p?(p.children||[]).map((c,i)=>`<option value="${i}">${esc(c.name)}</option>`).join(''):'<option value="">Select parent first</option>';};
   document.getElementById('scheduleForm').onsubmit=async ev=>{ev.preventDefault();const p=parents.find(x=>x.id===parentSelect.value),idx=Number(childSelect.value),c=p?.children?.[idx];if(!p||!c)return;try{await addDoc(collection(db,'schedules'),{parentUid:p.uid,parentDocId:p.id,childIndex:idx,childName:c.name,subject:document.getElementById('scheduleSubject').value,day:document.getElementById('scheduleDay').value,startTime:document.getElementById('scheduleStart').value,endTime:document.getElementById('scheduleEnd').value,tutorName:document.getElementById('scheduleTutor').value.trim(),tutorEmail:document.getElementById('scheduleTutorEmail').value.trim().toLowerCase(),location:document.getElementById('scheduleLocation').value.trim(),notes:document.getElementById('scheduleNotes').value.trim(),createdAt:serverTimestamp()});ev.target.reset();childSelect.innerHTML='<option value="">Select parent first</option>';msg('Schedule saved.','success');await loadAdmin();}catch(err){msg(errorText(err),'error');}};
