@@ -39,7 +39,7 @@ footer{text-align:center;color:var(--muted);padding:24px}.notice{background:#fff
 </main><footer>BrightPath Tuition</footer>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, updateDoc, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
 const firebaseConfig={apiKey:"AIzaSyBDuD8LloKpKvJwdxOptXaamr0KjaQJyng",authDomain:"brightpath-tuition-c240b.firebaseapp.com",projectId:"brightpath-tuition-c240b",storageBucket:"brightpath-tuition-c240b.firebasestorage.app",messagingSenderId:"869976922467",appId:"1:869976922467:web:b88ab6c024e64ec7fe5b56"};
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
@@ -82,7 +82,7 @@ function userView(role){
  <button type="button" class="secondary" id="addChildBtn">+ Add another child</button>`;
  portalContent.innerHTML=`<div class="notice">Create an account using your email and password. Your registration will be stored in Firebase and marked Pending for admin review.</div><h3>Register</h3>
  <form id="regForm"><div>${fields}<label>Password (minimum 6 characters)</label><input id="password" type="password" minlength="6" required></div><div class="actions"><button type="submit">Create account & submit registration</button></div></form>
- <hr><h3>Already registered? Sign in</h3><form id="loginForm"><label>Email</label><input id="loginEmail" type="email" required><label>Password</label><input id="loginPassword" type="password" required><div class="actions"><button type="submit">Sign in</button></div></form><div id="message"></div><div id="myList"></div>`;
+ <hr><h3>Already registered? Sign in</h3><form id="loginForm"><label>Email</label><input id="loginEmail" type="email" required><label>Password</label><input id="loginPassword" type="password" required><div class="actions"><button type="submit">Sign in</button></div></form><p><button type="button" class="secondary" id="forgotPasswordBtn">Forgot Password?</button></p><div id="message"></div><div id="myList"></div>`;
  if(!isTutor){let childCount=1;document.getElementById('addChildBtn').onclick=()=>{childCount++;const div=document.createElement('div');div.className='child-entry item';div.innerHTML=`<h3>Child ${childCount}</h3><label>Child's name</label><input class="childName" required><label>Child's age / school year</label><input class="childAge"><label>Subjects needed</label><div class="subjectgrid">${subjects.map(s=>`<label class="subject"><input type="checkbox" class="childSubject" value="${s}"> ${s}</label>`).join('')}</div><label>Preferred schedule</label><textarea class="childSchedule"></textarea>`;document.getElementById('childrenContainer').appendChild(div);};}
  document.getElementById('regForm').onsubmit=async e=>{e.preventDefault();const btn=e.submitter;btn.disabled=true;try{
  const email=document.getElementById('email').value.trim().toLowerCase(),password=document.getElementById('password').value;
@@ -92,6 +92,7 @@ function userView(role){
  const cred=await createUserWithEmailAndPassword(auth,email,password);payload.uid=cred.user.uid;await addDoc(collection(db,'registrations'),payload);
  msg('Account created and registration submitted. Status: Pending.','success');await renderMine();
  }catch(err){msg(errorText(err),'error');}finally{btn.disabled=false;}};
+ document.getElementById('forgotPasswordBtn').onclick=async()=>{const email=document.getElementById('loginEmail').value.trim();if(!email){msg('Please enter your email address above first.','error');return;}try{await sendPasswordResetEmail(auth,email);msg('Password reset email sent. Please check your inbox (and spam folder).','success');}catch(err){msg(errorText(err),'error');}};
  document.getElementById('loginForm').onsubmit=async e=>{e.preventDefault();try{const cred=await signInWithEmailAndPassword(auth,document.getElementById('loginEmail').value.trim(),document.getElementById('loginPassword').value);if(cred.user.email.toLowerCase()===ADMIN_EMAIL){await signOut(auth);msg('This is the admin account. Please use the Admin portal.','error');return;}await renderMine();msg('Signed in.','success');}catch(err){msg(errorText(err),'error');}};
 }
 async function renderMine(){
