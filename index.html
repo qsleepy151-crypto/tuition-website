@@ -145,7 +145,7 @@ async function loadAdmin(){
   document.getElementById('exportApprovedBtn').onclick=()=>{
     const csvCell=v=>{const s=String(v??'');return '"'+s.replace(/"/g,'""')+'"';};
     const downloadCsv=(filename,headers,rows)=>{
-      const content=[headers.map(csvCell).join(','),...rows.map(r=>r.map(csvCell).join(','))].join('\\r\\n');
+      const content=[headers.map(csvCell).join(','),...rows.map(r=>r.map(csvCell).join(','))].join('\r\n');
       const blob=new Blob([content],{type:'text/csv;charset=utf-8;'});
       const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);
     };
