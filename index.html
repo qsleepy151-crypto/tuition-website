@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BrightPath Tuition</title>
 <style>
 :root{--navy:#172554;--blue:#2563eb;--bg:#f5f7fb;--ink:#172033;--muted:#64748b;--white:#fff}
@@ -15,41 +14,28 @@ label{display:block;font-weight:600;margin:12px 0 6px}input,select,textarea{widt
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.hidden{display:none!important}.muted{color:var(--muted)}.subjectgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}.subject{background:#eff6ff;padding:10px;border-radius:10px}.subject input{width:auto}
 .item{border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin:10px 0}.item h3{margin:0 0 6px}.tag{display:inline-block;background:#dbeafe;color:#1e40af;padding:4px 9px;border-radius:99px;font-size:.8rem;margin:2px}
 footer{text-align:center;color:var(--muted);padding:24px}.notice{background:#fffbeb;padding:12px;border-radius:10px;color:#92400e;font-size:.92rem}.success{background:#ecfdf5;color:#065f46;padding:12px;border-radius:10px}.error{background:#fef2f2;color:#991b1b;padding:12px;border-radius:10px}.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.status{display:inline-block;padding:5px 10px;border-radius:999px;font-weight:700}.status-approved{background:#dcfce7;color:#166534}.status-rejected{background:#fee2e2;color:#991b1b}.status-pending{background:#fef3c7;color:#92400e}
+.child-entry{margin-top:14px}.child-entry h3{margin-bottom:10px}
 </style>
 </head>
 <body>
 <header><div class="wrap"><h1>BrightPath Tuition</h1><p>Learn confidently. Grow together.</p></div></header>
 <main>
-<section id="home" class="panel">
-<h2>Welcome! Choose your portal</h2><p class="muted">Choose how you'd like to use the tuition platform.</p>
+<section id="home" class="panel"><h2>Welcome! Choose your portal</h2><p class="muted">Choose how you'd like to use the tuition platform.</p>
 <div class="roles">
 <button class="role" onclick="showPortal('tutor')"><div class="emoji">👩‍🏫</div><h2>Tutor</h2><p>Register, manage subjects and view teaching schedules.</p></button>
-<button class="role" onclick="showPortal('parent')"><div class="emoji">👨‍👩‍👧</div><h2>Parents</h2><p>Register your child and manage tuition requests.</p></button>
+<button class="role" onclick="showPortal('parent')"><div class="emoji">👨‍👩‍👧</div><h2>Parents</h2><p>Register your children and manage tuition requests.</p></button>
 <button class="role" onclick="showPortal('admin')"><div class="emoji">🛡️</div><h2>Admin</h2><p>Moderate registrations and manage the platform.</p></button>
-</div>
-</section>
-<section id="portal" class="panel hidden">
-<div class="actions"><button class="secondary" onclick="goHome()">← Back</button></div>
-<h2 id="portalTitle"></h2><div id="portalContent"></div>
-</section>
+</div></section>
+<section id="portal" class="panel hidden"><div class="actions"><button class="secondary" onclick="goHome()">← Back</button></div><h2 id="portalTitle"></h2><div id="portalContent"></div></section>
 <section class="panel"><h2>Subjects</h2><div class="subjectgrid" id="subjectDisplay"></div></section>
-</main>
-<footer>BrightPath Tuition</footer>
-
+</main><footer>BrightPath Tuition</footer>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBDuD8LloKpKvJwdxOptXaamr0KjaQJyng",
-  authDomain: "brightpath-tuition-c240b.firebaseapp.com",
-  projectId: "brightpath-tuition-c240b",
-  storageBucket: "brightpath-tuition-c240b.firebasestorage.app",
-  messagingSenderId: "869976922467",
-  appId: "1:869976922467:web:b88ab6c024e64ec7fe5b56"
-};
-const app=initializeApp(firebaseConfig), auth=getAuth(app), db=getFirestore(app);
+import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, updateDoc, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+const firebaseConfig={apiKey:"AIzaSyBDuD8LloKpKvJwdxOptXaamr0KjaQJyng",authDomain:"brightpath-tuition-c240b.firebaseapp.com",projectId:"brightpath-tuition-c240b",storageBucket:"brightpath-tuition-c240b.firebasestorage.app",messagingSenderId:"869976922467",appId:"1:869976922467:web:b88ab6c024e64ec7fe5b56"};
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
 const ADMIN_EMAIL="qsleepy151@gmail.com";
 const subjects=['Malay','English','Mathematics','Additional Mathematics','History','Pendidikan Islam','Geography','Science','Biology','Chemistry','Physics'];
 document.getElementById('subjectDisplay').innerHTML=subjects.map(s=>`<div class="subject">${s}</div>`).join('');
@@ -57,11 +43,12 @@ let currentRole='';
 const portalContent=document.getElementById('portalContent');
 function msg(text,type='notice'){const el=document.getElementById('message');if(el){el.className=type;el.textContent=text;}}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function statusBadge(status){const cls=String(status||'Pending').toLowerCase();return `<span class="status status-${esc(cls)}">${esc(status||'Pending')}</span>`;}
 window.showPortal=(role)=>{currentRole=role;document.getElementById('home').classList.add('hidden');document.getElementById('portal').classList.remove('hidden');document.getElementById('portalTitle').textContent={tutor:'Tutor Portal',parent:'Parent Portal',admin:'Admin Moderator'}[role];if(role==='admin')adminView();else userView(role);};
 window.goHome=()=>{document.getElementById('portal').classList.add('hidden');document.getElementById('home').classList.remove('hidden');};
 function userView(role){
- const label=role==='tutor'?'Tutor':'Parent';
- const fields=role==='tutor'?`
+ const isTutor=role==='tutor';
+ const fields=isTutor?`
  <label>Full name</label><input id="name" required>
  <label>Email</label><input id="email" type="email" required>
  <label>Phone</label><input id="phone">
@@ -70,30 +57,32 @@ function userView(role){
  <label>Parent / guardian name</label><input id="name" required>
  <label>Email</label><input id="email" type="email" required>
  <label>Phone</label><input id="phone">
- <label>Child's name</label><input id="child" required>
- <label>Child's age / school year</label><input id="age">
- <label>Subjects needed</label><div class="subjectgrid">${subjects.map(s=>`<label class="subject"><input type="checkbox" name="sub" value="${s}"> ${s}</label>`).join('')}</div>
- <label>Preferred schedule</label><textarea id="schedule"></textarea>`;
- portalContent.innerHTML=`<div class="notice">Create an account using your email and password. Your registration will be stored in Firebase and will be marked Pending for admin review.</div>
- <h3>Register</h3><form id="regForm"><div>${fields}<label>Password (minimum 6 characters)</label><input id="password" type="password" minlength="6" required></div><div class="actions"><button type="submit">Create account & submit registration</button></div></form>
+ <div id="childrenContainer"><div class="child-entry item"><h3>Child 1</h3>
+ <label>Child's name</label><input class="childName" required>
+ <label>Child's age / school year</label><input class="childAge">
+ <label>Subjects needed</label><div class="subjectgrid">${subjects.map(s=>`<label class="subject"><input type="checkbox" class="childSubject" value="${s}"> ${s}</label>`).join('')}</div>
+ <label>Preferred schedule</label><textarea class="childSchedule"></textarea></div></div>
+ <button type="button" class="secondary" id="addChildBtn">+ Add another child</button>`;
+ portalContent.innerHTML=`<div class="notice">Create an account using your email and password. Your registration will be stored in Firebase and marked Pending for admin review.</div><h3>Register</h3>
+ <form id="regForm"><div>${fields}<label>Password (minimum 6 characters)</label><input id="password" type="password" minlength="6" required></div><div class="actions"><button type="submit">Create account & submit registration</button></div></form>
  <hr><h3>Already registered? Sign in</h3><form id="loginForm"><label>Email</label><input id="loginEmail" type="email" required><label>Password</label><input id="loginPassword" type="password" required><div class="actions"><button type="submit">Sign in</button></div></form><div id="message"></div><div id="myList"></div>`;
+ if(!isTutor){let childCount=1;document.getElementById('addChildBtn').onclick=()=>{childCount++;const div=document.createElement('div');div.className='child-entry item';div.innerHTML=`<h3>Child ${childCount}</h3><label>Child's name</label><input class="childName" required><label>Child's age / school year</label><input class="childAge"><label>Subjects needed</label><div class="subjectgrid">${subjects.map(s=>`<label class="subject"><input type="checkbox" class="childSubject" value="${s}"> ${s}</label>`).join('')}</div><label>Preferred schedule</label><textarea class="childSchedule"></textarea>`;document.getElementById('childrenContainer').appendChild(div);};}
  document.getElementById('regForm').onsubmit=async e=>{e.preventDefault();const btn=e.submitter;btn.disabled=true;try{
  const email=document.getElementById('email').value.trim().toLowerCase(),password=document.getElementById('password').value;
- const cred=await createUserWithEmailAndPassword(auth,email,password);const selected=[...document.querySelectorAll('input[name="sub"]:checked')].map(x=>x.value);
- await addDoc(collection(db,'registrations'),{uid:cred.user.uid,role,name:document.getElementById('name').value.trim(),email,phone:document.getElementById('phone').value.trim(),child:document.getElementById('child')?.value.trim()||'',age:document.getElementById('age')?.value.trim()||'',subjects:selected,schedule:document.getElementById('schedule')?.value.trim()||'',bio:document.getElementById('bio')?.value.trim()||'',status:'Pending',createdAt:new Date().toISOString()});
- msg('Account created and registration submitted. Status: Pending.','success');e.target.reset();await renderMine();
+ let payload={uid:null,role,name:document.getElementById('name').value.trim(),email,phone:document.getElementById('phone').value.trim(),status:'Pending',createdAt:serverTimestamp()};
+ if(isTutor){payload.subjects=[...document.querySelectorAll('input[name="sub"]:checked')].map(x=>x.value);payload.schedule=document.getElementById('schedule').value.trim();payload.bio=document.getElementById('bio').value.trim();}
+ else{payload.children=[...document.querySelectorAll('.child-entry')].map(div=>({name:div.querySelector('.childName').value.trim(),age:div.querySelector('.childAge').value.trim(),subjects:[...div.querySelectorAll('.childSubject:checked')].map(x=>x.value),schedule:div.querySelector('.childSchedule').value.trim()}));}
+ const cred=await createUserWithEmailAndPassword(auth,email,password);payload.uid=cred.user.uid;await addDoc(collection(db,'registrations'),payload);
+ msg('Account created and registration submitted. Status: Pending.','success');await renderMine();
  }catch(err){msg(errorText(err),'error');}finally{btn.disabled=false;}};
  document.getElementById('loginForm').onsubmit=async e=>{e.preventDefault();try{const cred=await signInWithEmailAndPassword(auth,document.getElementById('loginEmail').value.trim(),document.getElementById('loginPassword').value);if(cred.user.email.toLowerCase()===ADMIN_EMAIL){await signOut(auth);msg('This is the admin account. Please use the Admin portal.','error');return;}await renderMine();msg('Signed in.','success');}catch(err){msg(errorText(err),'error');}};
 }
-async function renderMine(){const el=document.getElementById('myList');if(!el||!auth.currentUser)return;try{const q=query(collection(db,'registrations'),where('uid','==',auth.currentUser.uid));const snap=await getDocs(q);el.innerHTML='<h3>Your registrations</h3>'+snap.docs.map(d=>{const r=d.data();return `<div class="item"><h3>${esc(r.name)} · ${esc(r.status)}</h3><p class="muted">${esc(r.email)}</p>${r.child?`<p>Child: ${esc(r.child)} (${esc(r.age)})</p>`:''}<p>Subjects: ${r.subjects.map(s=>`<span class="tag">${esc(s)}</span>`).join('')||'None'}</p><p>Schedule: ${esc(r.schedule||'Not specified')}</p></div>`}).join('')||'<p>No registrations found for this account.</p>';el.innerHTML+=`<div class="actions"><button class="secondary" onclick="logout()">Sign out</button></div>`;}catch(e){el.textContent=errorText(e);}}
+async function renderMine(){const el=document.getElementById('myList');if(!el||!auth.currentUser)return;try{const snap=await getDocs(query(collection(db,'registrations'),where('uid','==',auth.currentUser.uid)));el.innerHTML='<h3>Your registrations</h3>'+snap.docs.map(d=>{const r=d.data();let detail='';if(r.role==='parent'){detail=(r.children||[]).map((c,i)=>`<div class="item"><h4>Child ${i+1}: ${esc(c.name)} ${c.age?`(${esc(c.age)})`:''}</h4><p>Subjects: ${(c.subjects||[]).map(s=>`<span class="tag">${esc(s)}</span>`).join('')||'None selected'}</p><p>Schedule: ${esc(c.schedule||'Not specified')}</p></div>`).join('');}else{detail=`<p>Subjects: ${(r.subjects||[]).map(s=>`<span class="tag">${esc(s)}</span>`).join('')||'None selected'}</p><p>Schedule: ${esc(r.schedule||'Not specified')}</p><p>${esc(r.bio||'')}</p>`;}return `<div class="item"><h3>${esc(r.name)} · ${statusBadge(r.status)}</h3><p class="muted">${esc(r.email)}</p>${detail}</div>`}).join('')||'<p>No registrations found for this account.</p>';el.innerHTML+=`<div class="actions"><button class="secondary" onclick="logout()">Sign out</button></div>`;}catch(e){el.textContent=errorText(e);}}
 window.logout=async()=>{await signOut(auth);goHome();};
 function adminView(){portalContent.innerHTML=`<div class="notice">Sign in with the designated admin account to moderate registrations.</div><form id="adminLogin"><label>Admin email</label><input id="adminEmail" type="email" required value="${ADMIN_EMAIL}"><label>Password</label><input id="adminPassword" type="password" required><div class="actions"><button type="submit">Sign in as admin</button></div></form><div id="message"></div><div id="adminData"></div>`;
- document.getElementById('adminLogin').onsubmit=async e=>{e.preventDefault();try{const email=document.getElementById('adminEmail').value.trim().toLowerCase();if(email!==ADMIN_EMAIL){msg('This email is not the designated admin account.','error');return;}await signInWithEmailAndPassword(auth,email,document.getElementById('adminPassword').value);await loadAdmin();}catch(err){msg(errorText(err),'error');}};
-}
-async function loadAdmin(){const el=document.getElementById('adminData');try{const snap=await getDocs(query(collection(db,'registrations'),orderBy('createdAt','desc')));const rows=snap.docs.map(d=>({id:d.id,...d.data()}));el.innerHTML=`<h3>Registrations (${rows.length})</h3>`+(rows.length?rows.map(r=>`<div class="item"><h3>${esc(r.role)} · ${esc(r.name)}</h3><p>${esc(r.email)} · ${esc(r.phone||'')}</p>${r.child?`<p>Child: ${esc(r.child)} (${esc(r.age)})</p>`:''}<p>Subjects: ${r.subjects.map(s=>`<span class="tag">${esc(s)}</span>`).join('')}</p><p>Schedule: ${esc(r.schedule||'')}</p><p>Status: <strong>${esc(r.status)}</strong></p><div class="actions"><button onclick="setStatus('${r.id}','Approved')">Approve</button><button class="secondary" onclick="setStatus('${r.id}','Rejected')">Reject</button><button class="danger" onclick="deleteRecord('${r.id}')">Delete</button></div></div>`).join(''):'<p>No registrations yet.</p>')+`<div class="actions"><button class="secondary" onclick="logout()">Sign out</button></div>`;msg('Admin signed in.','success');}catch(err){msg(errorText(err),'error');}}
+document.getElementById('adminLogin').onsubmit=async e=>{e.preventDefault();try{const email=document.getElementById('adminEmail').value.trim().toLowerCase();if(email!==ADMIN_EMAIL){msg('This email is not the designated admin account.','error');return;}await signInWithEmailAndPassword(auth,email,document.getElementById('adminPassword').value);await loadAdmin();}catch(err){msg(errorText(err),'error');}};}
+async function loadAdmin(){const el=document.getElementById('adminData');try{const snap=await getDocs(query(collection(db,'registrations'),orderBy('createdAt','desc')));const rows=snap.docs.map(d=>({id:d.id,...d.data()}));el.innerHTML=`<h3>Registrations (${rows.length})</h3>`+(rows.length?rows.map(r=>{let detail='';if(r.role==='parent'){detail=(r.children||[]).map((c,i)=>`<div class="item"><h4>Child ${i+1}: ${esc(c.name)} ${c.age?`(${esc(c.age)})`:''}</h4><p>Subjects: ${(c.subjects||[]).map(s=>`<span class="tag">${esc(s)}</span>`).join('')||'None selected'}</p><p>Schedule: ${esc(c.schedule||'Not specified')}</p></div>`).join('');}else{detail=`<p>Subjects: ${(r.subjects||[]).map(s=>`<span class="tag">${esc(s)}</span>`).join('')||'None selected'}</p><p>Schedule: ${esc(r.schedule||'Not specified')}</p><p>Introduction: ${esc(r.bio||'')}</p>`;}return `<div class="item"><h3>${esc(r.role)} · ${esc(r.name)} · ${statusBadge(r.status)}</h3><p>${esc(r.email)} · ${esc(r.phone||'')}</p>${detail}<div class="actions"><button onclick="setStatus('${r.id}','Approved')">Approve</button><button class="secondary" onclick="setStatus('${r.id}','Rejected')">Reject</button><button class="danger" onclick="deleteRecord('${r.id}')">Delete</button></div></div>`}).join(''):'<p>No registrations yet.</p>')+`<div class="actions"><button class="secondary" onclick="logout()">Sign out</button></div>`;msg('Admin signed in.','success');}catch(err){msg(errorText(err),'error');}}
 window.setStatus=async(id,status)=>{try{await updateDoc(doc(db,'registrations',id),{status});await loadAdmin();}catch(e){msg(errorText(e),'error');}};
 window.deleteRecord=async(id)=>{if(confirm('Delete this registration?')){try{await deleteDoc(doc(db,'registrations',id));await loadAdmin();}catch(e){msg(errorText(e),'error');}}};
 function errorText(e){const code=e?.code||'';return code==='auth/email-already-in-use'?'That email already has an account. Please use the sign-in form.':code==='auth/invalid-credential'?'Email or password is incorrect.':code==='auth/weak-password'?'Password must be at least 6 characters.':code==='permission-denied'?'Firebase denied this action. Check that the rules are published and the admin document role is exactly admin.':e?.message||'Something went wrong.';}
-</script>
-</body>
-</html>
+</script></body></html>
