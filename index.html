@@ -50,6 +50,16 @@ let currentRole='';
 const portalContent=document.getElementById('portalContent');
 function msg(text,type='notice'){const el=document.getElementById('message');if(el){el.className=type;el.textContent=text;}}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+ function formatExcelTime(value){
+  if(typeof value === 'number'){
+    const totalMinutes = Math.round(value * 24 * 60);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    const h12 = hours % 12 || 12;
+    return `${h12}:${String(minutes).padStart(2,'0')} ${hours >= 12 ? 'PM' : 'AM'}`;
+  }
+  return String(value || '');
+}
 function statusBadge(status){const cls=String(status||'Pending').toLowerCase();return `<span class="status status-${esc(cls)}">${esc(status||'Pending')}</span>`;}
 window.showPortal=(role)=>{currentRole=role;document.getElementById('home').classList.add('hidden');document.getElementById('portal').classList.remove('hidden');document.getElementById('portalTitle').textContent={tutor:'Tutor Portal',parent:'Parent Portal',admin:'Admin Moderator'}[role];if(role==='admin')adminView();else userView(role);};
 window.goHome=()=>{document.getElementById('portal').classList.add('hidden');document.getElementById('home').classList.remove('hidden');};
