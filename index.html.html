@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BrightPath Tuition</title>
+<style>
+:root{--navy:#172554;--blue:#2563eb;--mint:#d1fae5;--bg:#f5f7fb;--ink:#172033;--muted:#64748b;--white:#fff}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:linear-gradient(135deg,#172554,#2563eb);color:white;padding:28px 20px}
+header .wrap{max-width:1100px;margin:auto}h1{margin:0;font-size:clamp(1.8rem,5vw,2.6rem)}header p{margin:8px 0 0;color:#dbeafe}
+main{max-width:1100px;margin:26px auto;padding:0 16px}.panel{background:white;border-radius:18px;padding:24px;box-shadow:0 8px 28px #0f172a0c;margin-bottom:20px}
+.roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}.role{padding:22px;border:1px solid #e2e8f0;border-radius:16px;background:white;text-align:left;cursor:pointer;transition:.15s}.role:hover{border-color:var(--blue);transform:translateY(-2px)}.role h2{margin:8px 0}.role p{color:var(--muted);margin:0}.emoji{font-size:2rem}
+button{border:0;border-radius:10px;background:var(--blue);color:white;font-weight:700;padding:12px 16px;cursor:pointer}button.secondary{background:#e2e8f0;color:var(--ink)}button.danger{background:#fee2e2;color:#991b1b}button:disabled{opacity:.5;cursor:not-allowed}
+label{display:block;font-weight:600;margin:12px 0 6px}input,select,textarea{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:10px;font:inherit;background:white}textarea{min-height:80px}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.hidden{display:none!important}.muted{color:var(--muted)}.subjectgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}.subject{background:#eff6ff;padding:10px;border-radius:10px}.subject input{width:auto}
+.item{border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin:10px 0}.item h3{margin:0 0 6px}.tag{display:inline-block;background:#dbeafe;color:#1e40af;padding:4px 9px;border-radius:99px;font-size:.8rem;margin:2px}
+footer{text-align:center;color:var(--muted);padding:24px}.notice{background:#fffbeb;padding:12px;border-radius:10px;color:#92400e;font-size:.92rem}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>BrightPath Tuition</h1><p>Learn confidently. Grow together.</p></div></header>
+<main>
+<section id="home" class="panel">
+<h2>Welcome! Choose your portal</h2><p class="muted">Choose how you'd like to use the tuition platform.</p>
+<div class="roles">
+<button class="role" onclick="showPortal('tutor')"><div class="emoji">👩‍🏫</div><h2>Tutor</h2><p>Register, manage subjects and view teaching schedules.</p></button>
+<button class="role" onclick="showPortal('parent')"><div class="emoji">👨‍👩‍👧</div><h2>Parents</h2><p>Register your child and manage tuition requests.</p></button>
+<button class="role" onclick="showPortal('admin')"><div class="emoji">🛡️</div><h2>Admin</h2><p>Moderate registrations and manage the platform.</p></button>
+</div>
+</section>
+<section id="portal" class="panel hidden">
+<div class="actions"><button class="secondary" onclick="goHome()">← Back</button></div>
+<h2 id="portalTitle"></h2><div id="portalContent"></div>
+</section>
+<section class="panel"><h2>Subjects</h2><div class="subjectgrid" id="subjectDisplay"></div></section>
+</main>
+<footer>BrightPath Tuition · Starter demo</footer>
+<script>
+const subjects=['Malay','English','Mathematics','Additional Mathematics','History','Pendidikan Islam','Geography','Science','Biology','Chemistry','Physics'];
+const key='brightpath_demo_records';
+function records(){try{return JSON.parse(localStorage.getItem(key)||'[]')}catch(e){return []}}
+function save(r){localStorage.setItem(key,JSON.stringify(r))}
+document.getElementById('subjectDisplay').innerHTML=subjects.map(s=>`<div class="subject">${s}</div>`).join('');
+let currentRole='';
+function showPortal(role){currentRole=role;document.getElementById('home').classList.add('hidden');document.getElementById('portal').classList.remove('hidden');
+let titles={tutor:'Tutor Portal',parent:'Parent Portal',admin:'Admin Moderator'};document.getElementById('portalTitle').textContent=titles[role];
+if(role==='admin') adminView(); else userView(role);}
+function goHome(){document.getElementById('portal').classList.add('hidden');document.getElementById('home').classList.remove('hidden')}
+function userView(role){
+let label=role==='tutor'?'Tutor':'Parent';
+let fields=role==='tutor'?`
+<label>Full name</label><input id="name" required placeholder="Your full name">
+<label>Email</label><input id="email" type="email" required placeholder="you@example.com">
+<label>Phone</label><input id="phone" placeholder="Phone number">
+<label>Subjects you teach</label><div class="subjectgrid">${subjects.map(s=>`<label class="subject"><input type="checkbox" name="sub" value="${s}"> ${s}</label>`).join('')}</div>
+<label>Availability / schedule</label><textarea id="schedule" placeholder="e.g. Monday 4–6pm, Saturday morning"></textarea>
+<label>Short introduction</label><textarea id="bio" placeholder="Tell parents about your teaching experience"></textarea>`:`
+<label>Parent / guardian name</label><input id="name" required placeholder="Your full name">
+<label>Email</label><input id="email" type="email" required placeholder="you@example.com">
+<label>Phone</label><input id="phone" placeholder="Phone number">
+<label>Child's name</label><input id="child" required placeholder="Student name">
+<label>Child's age / school year</label><input id="age" placeholder="Age or form/grade">
+<label>Subjects needed</label><div class="subjectgrid">${subjects.map(s=>`<label class="subject"><input type="checkbox" name="sub" value="${s}"> ${s}</label>`).join('')}</div>
+<label>Preferred schedule</label><textarea id="schedule" placeholder="Preferred days and times"></textarea>`;
+document.getElementById('portalContent').innerHTML=`<div class="notice">Demo registration: information is stored only in this browser on this device. It is not a secure account system.</div><h3>Registration</h3><form id="regForm"><div>${fields}</div><div class="actions"><button type="submit">Submit registration</button></div></form><h3>Submitted registrations on this device</h3><div id="myList"></div>`;
+document.getElementById('regForm').onsubmit=e=>{e.preventDefault();let selected=[...document.querySelectorAll('input[name="sub"]:checked')].map(x=>x.value);let r=records();r.push({id:Date.now(),role,name:document.getElementById('name').value,email:document.getElementById('email').value,phone:document.getElementById('phone').value,child:document.getElementById('child')?.value||'',age:document.getElementById('age')?.value||'',subjects:selected,schedule:document.getElementById('schedule')?.value||'',bio:document.getElementById('bio')?.value||'',status:'Pending',created:new Date().toLocaleString()});save(r);e.target.reset();renderMine(role);alert('Registration saved in this browser demo.');};
+renderMine(role);
+}
+function renderMine(role){let list=records().filter(r=>r.role===role);let el=document.getElementById('myList');if(!el)return;el.innerHTML=list.length?list.map(r=>`<div class="item"><h3>${escapeHtml(r.name)} · ${r.status}</h3><div class="muted">${escapeHtml(r.email)} · ${escapeHtml(r.created)}</div>${r.child?`<p>Child: ${escapeHtml(r.child)} (${escapeHtml(r.age)})</p>`:''}<p>Subjects: ${r.subjects.map(s=>`<span class="tag">${escapeHtml(s)}</span>`).join('')||'None selected'}</p><p>Schedule: ${escapeHtml(r.schedule||'Not specified')}</p></div>`).join(''):'<p class="muted">No registrations yet.</p>'}
+function adminView(){document.getElementById('portalContent').innerHTML=`<div class="notice">Demo moderator view. No admin authentication is configured; this is not safe for real personal data.</div><label>Admin access passcode (demo)</label><input id="adminCode" type="password" placeholder="Enter demo passcode"><div class="actions"><button onclick="unlockAdmin()">Open moderator dashboard</button></div><div id="adminData"></div>`}
+function unlockAdmin(){if(document.getElementById('adminCode').value!=='tuition123'){alert('Demo passcode incorrect.');return;}let list=records();let el=document.getElementById('adminData');el.innerHTML=`<h3>Registrations (${list.length})</h3>`+(list.length?list.map(r=>`<div class="item" id="record-${r.id}"><h3>${escapeHtml(r.role)} · ${escapeHtml(r.name)}</h3><p>${escapeHtml(r.email)} · ${escapeHtml(r.phone||'')}</p>${r.child?`<p>Child: ${escapeHtml(r.child)} (${escapeHtml(r.age)})</p>`:''}<p>Subjects: ${r.subjects.map(s=>`<span class="tag">${escapeHtml(s)}</span>`).join('')}</p><p>Schedule: ${escapeHtml(r.schedule||'')}</p><p>Status: <strong>${r.status}</strong></p><div class="actions"><button onclick="setStatus(${r.id},'Approved')">Approve</button><button class="secondary" onclick="setStatus(${r.id},'Rejected')">Reject</button><button class="danger" onclick="deleteRecord(${r.id})">Delete</button></div></div>`).join(''):'<p>No registrations.</p>')+`<div class="actions"><button class="danger" onclick="clearAll()">Clear all demo data</button></div>`}
+function setStatus(id,status){let r=records();let i=r.findIndex(x=>x.id===id);if(i>=0){r[i].status=status;save(r);unlockAdmin();}}
+function deleteRecord(id){if(confirm('Delete this registration?')){save(records().filter(x=>x.id!==id));unlockAdmin();}}
+function clearAll(){if(confirm('Clear all registrations stored in this browser?')){save([]);unlockAdmin();}}
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+</script>
+</body>
+</html>
