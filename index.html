@@ -65,24 +65,89 @@ function userView(role){
  <label>Full name</label><input id="name" required>
  <label>Email</label><input id="email" type="email" required>
  <label>Phone</label><input id="phone">
- <label>Subjects you teach</label><div class="subjectgrid">${subjects.map(s=>`<label class="subject"><input type="checkbox" name="sub" value="${s}"> ${s}</label>`).join('')}</div>
+  <label>Subjects you teach</label><div class="subjectgrid">${subjects.map(s=>`<label class="subject"><input type="checkbox" name="sub" value="${s}"> ${s}</label>`).join('')}</div>
  <label>Availability / schedule</label><textarea id="schedule"></textarea><label>Short introduction</label><textarea id="bio"></textarea>`:`
- <label>Parent / guardian name</label><input id="name" required>
- <label>Email</label><input id="email" type="email" required>
- <label>Phone</label><input id="phone">
- <label>Child's name</label><input id="child" required>
- <label>Child's age / school year</label><input id="age">
- <label>Subjects needed</label><div class="subjectgrid">${subjects.map(s=>`<label class="subject"><input type="checkbox" name="sub" value="${s}"> ${s}</label>`).join('')}</div>
- <label>Preferred schedule</label><textarea id="schedule"></textarea>`;
+<label>Parent / guardian name</label><input id="name" required>
+<label>Email</label><input id="email" type="email" required>
+<label>Phone</label><input id="phone">
+
+<div id="childrenContainer">
+  <div class="child-entry item">
+    <h3>Child 1</h3>
+    <label>Child's name</label><input class="childName" required>
+    <label>Child's age / school year</label><input class="childAge">
+    <label>Subjects needed</label>
+    <div class="subjectgrid">${subjects.map(s=>`<label class="subject"><input type="checkbox" class="childSubject" value="${s}"> ${s}</label>`).join('')}</div>
+    <label>Preferred schedule</label><textarea class="childSchedule"></textarea>
+  </div>
+</div>
+<button type="button" class="secondary" id="addChildBtn">+ Add another child</button>`
  portalContent.innerHTML=`<div class="notice">Create an account using your email and password. Your registration will be stored in Firebase and will be marked Pending for admin review.</div>
  <h3>Register</h3><form id="regForm"><div>${fields}<label>Password (minimum 6 characters)</label><input id="password" type="password" minlength="6" required></div><div class="actions"><button type="submit">Create account & submit registration</button></div></form>
  <hr><h3>Already registered? Sign in</h3><form id="loginForm"><label>Email</label><input id="loginEmail" type="email" required><label>Password</label><input id="loginPassword" type="password" required><div class="actions"><button type="submit">Sign in</button></div></form><div id="message"></div><div id="myList"></div>`;
- document.getElementById('regForm').onsubmit=async e=>{e.preventDefault();const btn=e.submitter;btn.disabled=true;try{
- const email=document.getElementById('email').value.trim().toLowerCase(),password=document.getElementById('password').value;
- const cred=await createUserWithEmailAndPassword(auth,email,password);const selected=[...document.querySelectorAll('input[name="sub"]:checked')].map(x=>x.value);
- await addDoc(collection(db,'registrations'),{uid:cred.user.uid,role,name:document.getElementById('name').value.trim(),email,phone:document.getElementById('phone').value.trim(),child:document.getElementById('child')?.value.trim()||'',age:document.getElementById('age')?.value.trim()||'',subjects:selected,schedule:document.getElementById('schedule')?.value.trim()||'',bio:document.getElementById('bio')?.value.trim()||'',status:'Pending',createdAt:new Date().toISOString()});
- msg('Account created and registration submitted. Status: Pending.','success');e.target.reset();await renderMine();
- }catch(err){msg(errorText(err),'error');}finally{btn.disabled=false;}};
+ if(role === 'parent'){
+  let childCount = 1;
+  document.getElementById('addChildBtn').onclick = () => {
+    childCount++;
+    const container = document.getElementById('childrenContainer');
+    const div = document.createElement('div');
+    div.className = 'child-entry item';
+
+    div.innerHTML = `
+      <h3>Child ${childCount}</h3>
+      <label>Child's name</label><input class="childName" required>
+      <label>Child's age / school year</label><input class="childAge">
+      <label>Subjects needed</label>
+      <div class="subjectgrid">
+        ${subjects.map(s=>`<label class="subject"><input type="checkbox" class="childSubject" value="${s}"> ${s}</label>`).join('')}
+      </div>
+      <label>Preferred schedule</label><textarea class="childSchedule"></textarea>
+    `;
+
+    container.appendChild(div);
+  };
+}
+document.getElementById('regForm').onsubmit=async e=>{
+  e.preventDefault();
+  const btn=e.submitter;
+  btn.disabled=true;
+
+  try{
+    const email=document.getElementById('email').value.trim().toLowerCase();
+    const password=document.getElementById('password').value;
+
+    const children=[...document.querySelectorAll('.child-entry')].map(div=>({
+      name:div.querySelector('.childName').value.trim(),
+      age:div.querySelector('.childAge').value.trim(),
+      subjects:[...div.querySelectorAll('.childSubject:checked')].map(x=>x.value),
+      schedule:div.querySelector('.childSchedule').value.trim()
+    }));
+
+    const cred=await createUserWithEmailAndPassword(auth,email,password);
+
+    await addDoc(collection(db,'registrations'),{
+      uid:cred.user.uid,
+      role:'parent',
+      name:document.getElementById('name').value.trim(),
+      email,
+      phone:document.getElementById('phone').value.trim(),
+      children,
+      status:'Pending',
+      createdAt:serverTimestamp()
+    });
+
+    msg('Account created and registration submitted. Status: Pending.','success');
+    e.target.reset();
+    document.getElementById('childrenContainer').innerHTML='';
+    childCount=1;
+    await renderMine();
+
+  }catch(err){
+    msg(errorText(err),'error');
+  }finally{
+    btn.disabled=false;
+  }
+};
  document.getElementById('loginForm').onsubmit=async e=>{e.preventDefault();try{const cred=await signInWithEmailAndPassword(auth,document.getElementById('loginEmail').value.trim(),document.getElementById('loginPassword').value);if(cred.user.email.toLowerCase()===ADMIN_EMAIL){await signOut(auth);msg('This is the admin account. Please use the Admin portal.','error');return;}await renderMine();msg('Signed in.','success');}catch(err){msg(errorText(err),'error');}};
 }
 async function renderMine(){const el=document.getElementById('myList');if(!el||!auth.currentUser)return;try{const q=query(collection(db,'registrations'),where('uid','==',auth.currentUser.uid));const snap=await getDocs(q);el.innerHTML='<h3>Your registrations</h3>'+snap.docs.map(d=>{const r=d.data();return `<div class="item"><h3>${esc(r.name)} · ${esc(r.status)}</h3><p class="muted">${esc(r.email)}</p>${r.child?`<p>Child: ${esc(r.child)} (${esc(r.age)})</p>`:''}<p>Subjects: ${r.subjects.map(s=>`<span class="tag">${esc(s)}</span>`).join('')||'None'}</p><p>Schedule: ${esc(r.schedule||'Not specified')}</p></div>`}).join('')||'<p>No registrations found for this account.</p>';el.innerHTML+=`<div class="actions"><button class="secondary" onclick="logout()">Sign out</button></div>`;}catch(e){el.textContent=errorText(e);}}
