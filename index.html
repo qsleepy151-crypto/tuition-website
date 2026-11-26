@@ -176,7 +176,7 @@ async function loadAdmin(){
         const found=await getDocs(query(collection(db,'registrations'),where('email','==',email)));
         const pdoc=found.docs.find(x=>x.data().role==='parent');if(!pdoc){counts.skippedSchedules++;continue;}
         const p=pdoc.data(),childObj=(p.children||[]).find(x=>norm(x.name)===norm(child));
-        await addDoc(collection(db,'schedules'),{parentUid:p.uid||null,parentDocId:pdoc.id,childIndex:(p.children||[]).findIndex(x=>norm(x.name)===norm(child)),childName:child,subject:String(s['Subject']||''),day:String(s['Day / Date']||''),startTime:String(s['Start Time']||''),endTime:String(s['End Time']||''),tutorName:String(s['Tutor Name']||''),tutorEmail:norm(s['Tutor Email']),location:String(s['Location / Online Link']||''),notes:String(s['Notes']||''),createdAt:serverTimestamp(),importedFromExcel:true});counts.schedules++;
+        await addDoc(collection(db,'schedules'),{parentUid:p.uid||null,parentDocId:pdoc.id,childIndex:(p.children||[]).findIndex(x=>norm(x.name)===norm(child)),childName:child,subject:String(s['Subject']||''),day:String(s['Day / Date']||''),startTime:formatExcelTime(s['Start Time']),endTime:formatExcelTime(s['End Time']),tutorName:String(s['Tutor Name']||''),tutorEmail:norm(s['Tutor Email']),location:String(s['Location / Online Link']||''),notes:String(s['Notes']||''),createdAt:serverTimestamp(),importedFromExcel:true});counts.schedules++;
       }
       for(const p of paymentRows){
         if(!String(p['Parent Email']||'').trim()){counts.skippedPayments++;continue;}
