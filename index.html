@@ -115,7 +115,17 @@ async function renderMine(){
    html+='<h3>Upcoming tuition schedule</h3>';
    schedSnap.docs.forEach(sd=>{const s=sd.data();html+=`<div class="schedule-card"><h4>${esc(s.childName)} · ${esc(s.subject)}</h4><p><strong>${esc(s.day||s.date||'')}</strong> · ${esc(s.startTime||'')} – ${esc(s.endTime||'')}</p><p>Tutor: ${esc(s.tutorName||s.tutorEmail||'Not assigned')}</p><p>${esc(s.location||'')}</p><p>${esc(s.notes||'')}</p></div>`;});
   }else html+='<h3>Upcoming tuition schedule</h3><p class="muted">No lessons have been scheduled yet.</p>';
+  if(docs.some(d=>d.data().role==='parent')){
+   const reports=await getDocs(query(collection(db,'reports'),where('parentUid','==',auth.currentUser.uid)));
+   if(!reports.empty){html+='<h3>Teacher class reports</h3>';reports.docs.forEach(rd=>{const q=rd.data();html+=`<div class="item"><h4>${esc(q.childName)} · ${esc(q.subject)} · ${esc(q.lessonDate||q.day||'')}</h4><p><strong>Topics:</strong> ${esc(q.topics||'')}</p><p><strong>Progress:</strong> ${esc(q.progress||'')}</p><p><strong>Homework:</strong> ${esc(q.homework||'')}</p><p><strong>Improve:</strong> ${esc(q.improve||'')}</p><p><strong>Next lesson:</strong> ${esc(q.nextPlan||'')}</p><p><strong>Tutor:</strong> ${esc(q.tutorName||q.tutorEmail||'')}</p></div>`;});}
+  }else{
+   const tutorSched=await getDocs(query(collection(db,'schedules'),where('tutorEmail','==',auth.currentUser.email.toLowerCase())));
+   html+='<h3>Assigned lessons & class reports</h3>';
+   tutorSched.docs.forEach(sd=>{const s=sd.data();html+=`<div class="item"><h4>${esc(s.childName)} · ${esc(s.subject)}</h4><p>${esc(s.day||'')} · ${esc(s.startTime||'')}–${esc(s.endTime||'')}</p><p>Parent: ${esc(s.parentDocId||'')}</p><form class="reportForm" data-schedule="${sd.id}" data-parentuid="${esc(s.parentUid||'')}" data-child="${esc(s.childName||'')}" data-subject="${esc(s.subject||'')}" data-day="${esc(s.day||'')}"><label>Lesson date</label><input name="lessonDate" type="date"><label>Topics covered</label><textarea name="topics" required></textarea><label>Student progress</label><textarea name="progress"></textarea><label>Homework</label><textarea name="homework"></textarea><label>Areas to improve</label><textarea name="improve"></textarea><label>Next lesson plan</label><textarea name="nextPlan"></textarea><button type="submit">Submit report</button></form></div>`;});
+   html+='<div id="reportMessage"></div>';
+  }
   el.innerHTML=html+`<div class="actions"><button class="secondary" onclick="logout()">Sign out</button></div>`;
+  document.querySelectorAll('.reportForm').forEach(f=>f.onsubmit=async ev=>{ev.preventDefault();const fd=new FormData(f);try{await addDoc(collection(db,'reports'),{scheduleId:f.dataset.schedule,parentUid:f.dataset.parentuid,childName:f.dataset.child,subject:f.dataset.subject,day:f.dataset.day,lessonDate:fd.get('lessonDate'),topics:fd.get('topics'),progress:fd.get('progress'),homework:fd.get('homework'),improve:fd.get('improve'),nextPlan:fd.get('nextPlan'),tutorName:auth.currentUser.displayName||'',tutorEmail:auth.currentUser.email,createdAt:serverTimestamp()});f.reset();const m=document.getElementById('reportMessage');if(m)m.innerHTML='<div class="success">Report submitted!</div>';}catch(err){const m=document.getElementById('reportMessage');if(m)m.innerHTML='<div class="error">'+esc(errorText(err))+'</div>';}});
  }catch(e){el.textContent=errorText(e);}
 }
 window.logout=async()=>{await signOut(auth);goHome();};
