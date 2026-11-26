@@ -131,7 +131,7 @@ async function loadAdmin(){
       const rowsOf=name=>book.Sheets[name]?XLSX.utils.sheet_to_json(book.Sheets[name],{defval:''}):[];
       const norm=x=>String(x||'').trim().toLowerCase();
       const parentRows=rowsOf('Parents & Children'), tutorRows=rowsOf('Tutors'), scheduleRows=rowsOf('Class Schedule'), paymentRows=rowsOf('Payments');
-      let counts={parents:0,tutors:0,schedules:0,payments:0};
+      let counts={parents:0,tutors:0,schedules:0,payments:0,skippedSchedules:0,skippedPayments:0};
       // Parents: aggregate children by email, match registered parent accounts where possible.
       const grouped={};
       for(const row of parentRows){
@@ -164,15 +164,15 @@ async function loadAdmin(){
       for(const s of scheduleRows){
         const email=norm(s['Parent Email']),child=String(s['Child Name']||'').trim();if(!email||!child)continue;
         const found=await getDocs(query(collection(db,'registrations'),where('email','==',email)));
-        const pdoc=found.docs.find(x=>x.data().role==='parent');if(!pdoc)continue;
+        const pdoc=found.docs.find(x=>x.data().role==='parent');if(!pdoc){counts.skippedSchedules++;continue;}
         const p=pdoc.data(),childObj=(p.children||[]).find(x=>norm(x.name)===norm(child));
         await addDoc(collection(db,'schedules'),{parentUid:p.uid||null,parentDocId:pdoc.id,childIndex:(p.children||[]).findIndex(x=>norm(x.name)===norm(child)),childName:child,subject:String(s['Subject']||''),day:String(s['Day / Date']||''),startTime:String(s['Start Time']||''),endTime:String(s['End Time']||''),tutorName:String(s['Tutor Name']||''),tutorEmail:norm(s['Tutor Email']),location:String(s['Location / Online Link']||''),notes:String(s['Notes']||''),createdAt:serverTimestamp(),importedFromExcel:true});counts.schedules++;
       }
       for(const p of paymentRows){
-        if(!String(p['Parent Email']||'').trim())continue;
+        if(!String(p['Parent Email']||'').trim()){counts.skippedPayments++;continue;}
         await addDoc(collection(db,'payments'),{parentEmail:norm(p['Parent Email']),childName:String(p['Child Name']||''),description:String(p['Subject / Description']||''),amount:String(p['Amount (RM)']||''),dueDate:String(p['Due Date']||''),paymentDate:String(p['Payment Date']||''),status:String(p['Payment Status']||'Pending'),notes:String(p['Notes']||''),createdAt:serverTimestamp(),importedFromExcel:true});counts.payments++;
       }
-      out.innerHTML=`<div class="success">Import finished. Parent groups: ${counts.parents}; tutors: ${counts.tutors}; schedules: ${counts.schedules}; payment rows: ${counts.payments}. Reloading admin records...</div>`;
+      out.innerHTML=`<div class="success">Import finished. Parents updated/created: ${counts.parents}; tutors updated/created: ${counts.tutors}; schedules saved: ${counts.schedules}; schedules skipped (parent email not found): ${counts.skippedSchedules}; payments saved: ${counts.payments}; payment rows skipped (missing parent email): ${counts.skippedPayments}. Imported parent records without an account UID are Admin-only until the parent registers/signs in.</div>`;
       await loadAdmin();
     }catch(err){out.innerHTML='<div class="error">Import failed: '+esc(err.message||err)+'</div>';}
     finally{btn.disabled=false;}
