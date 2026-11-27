@@ -51,7 +51,7 @@ import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, updat
 const firebaseConfig={apiKey:"AIzaSyBDuD8LloKpKvJwdxOptXaamr0KjaQJyng",authDomain:"brightpath-tuition-c240b.firebaseapp.com",projectId:"brightpath-tuition-c240b",storageBucket:"brightpath-tuition-c240b.firebasestorage.app",messagingSenderId:"869976922467",appId:"1:869976922467:web:b88ab6c024e64ec7fe5b56"};
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
 const ADMIN_EMAIL="qsleepy151@gmail.com";
-const subjects=['Bahasa Melayu','Bahasa Inggeris','Matematik','Matematik Tambahan','Geografi','Sejarah','Biologi','Pendidikan Islam'];
+const subjects=['Malay','English','Mathematics','Additional Mathematics','History','Pendidikan Islam','Geography','Science','Biology','Chemistry','Physics'];
 document.getElementById('subjectDisplay').innerHTML=subjects.map(s=>`<div class="subject">${s}</div>`).join('');
 let currentRole='';
 const portalContent=document.getElementById('portalContent');
@@ -144,9 +144,41 @@ async function renderMine(){
    html+='<div id="reportMessage"></div>';
   }
   el.innerHTML=html+`<div class="actions"><button class="secondary" onclick="logout()">Sign out</button></div>`;
+  setupUserDashboardSections(el);
   document.querySelectorAll('.reportForm').forEach(f=>f.onsubmit=async ev=>{ev.preventDefault();const fd=new FormData(f);try{await addDoc(collection(db,'reports'),{scheduleId:f.dataset.schedule,parentUid:f.dataset.parentuid,childName:f.dataset.child,subject:f.dataset.subject,day:f.dataset.day,lessonDate:fd.get('lessonDate'),topics:fd.get('topics'),progress:fd.get('progress'),homework:fd.get('homework'),improve:fd.get('improve'),nextPlan:fd.get('nextPlan'),tutorName:auth.currentUser.displayName||'',tutorEmail:auth.currentUser.email,createdAt:serverTimestamp()});f.reset();const m=document.getElementById('reportMessage');if(m)m.innerHTML='<div class="success">Report submitted!</div>';}catch(err){const m=document.getElementById('reportMessage');if(m)m.innerHTML='<div class="error">'+esc(errorText(err))+'</div>';}});
  }catch(e){el.textContent=errorText(e);}
 }
+
+function setupUserDashboardSections(root){
+ if(!root||root.dataset.menuReady)return;
+ root.dataset.menuReady='1';
+ const nodes=[...root.childNodes].filter(n=>!(n.nodeType===3&&!n.textContent.trim()));
+ const dashboardTitle=nodes.find(n=>n.nodeType===1&&n.tagName==='H3'&&n.textContent.trim()==='Your dashboard');
+ const signout=nodes.find(n=>n.nodeType===1&&n.querySelector?.('button[onclick="logout()"]'));
+ const menu=document.createElement('div');menu.className='admin-nav user-dashboard-nav';
+ const panels=[];
+ let current=null;
+ nodes.forEach(n=>{
+  if(n===dashboardTitle||n===signout)return;
+  if(n.nodeType===1&&n.tagName==='H3'){
+    current={label:n.textContent.trim(),nodes:[n]};panels.push(current);return;
+  }
+  if(!current){current={label:'👤 Profile',nodes:[]};panels.push(current);}
+  current.nodes.push(n);
+ });
+ if(!panels.length)return;
+ const wrap=document.createElement('div');
+ panels.forEach((p,i)=>{
+  const panel=document.createElement('section');panel.className='admin-section hidden';
+  const back=document.createElement('button');back.type='button';back.className='secondary admin-back';back.textContent='← Back to Dashboard Menu';back.onclick=()=>{panel.classList.add('hidden');menu.classList.remove('hidden');};
+  panel.append(back);p.nodes.forEach(n=>panel.append(n));wrap.append(panel);
+  const b=document.createElement('button');b.type='button';b.innerHTML='<strong>'+esc(p.label||('Section '+(i+1)))+'</strong><br><small>Tap to view</small>';b.onclick=()=>{menu.classList.add('hidden');panel.classList.remove('hidden');};menu.append(b);
+ });
+ if(dashboardTitle)root.prepend(dashboardTitle);
+ root.append(menu,wrap);
+ if(signout)root.append(signout);
+}
+
 window.logout=async()=>{await signOut(auth);goHome();};
 function adminView(){portalContent.innerHTML=`<div class="notice">Sign in with the designated admin account to moderate registrations.</div><form id="adminLogin"><label>Admin email</label><input id="adminEmail" type="email" required value="${ADMIN_EMAIL}"><label>Password</label><input id="adminPassword" type="password" required><div class="actions"><button type="submit">Sign in as admin</button></div></form><div id="message"></div><div id="adminData"></div>`;
 document.getElementById('adminLogin').onsubmit=async e=>{e.preventDefault();try{const email=document.getElementById('adminEmail').value.trim().toLowerCase();if(email!==ADMIN_EMAIL){msg('This email is not the designated admin account.','error');return;}await signInWithEmailAndPassword(auth,email,document.getElementById('adminPassword').value);await loadAdmin();}catch(err){msg(errorText(err),'error');}};}
