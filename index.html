@@ -23,6 +23,13 @@ footer{text-align:center;color:var(--muted);padding:24px}.notice{background:#fff
 
 
 .excel-import{background:#eef6ff;border:1px solid #bfdbfe;border-radius:14px;padding:16px;margin:18px 0}
+
+.admin-nav{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:18px 0 22px}
+.admin-nav button{padding:18px;text-align:left;background:#F3E8FF;color:#374151;border:1px solid #E9D5FF}
+.admin-nav button:hover{background:#E9D5FF}
+.admin-section{border:1px solid #e2e8f0;border-radius:16px;padding:18px;margin:12px 0;background:#fff}
+.admin-section-title{margin-top:0}
+.admin-back{margin-bottom:14px}
 </style>
 </head>
 <body>
@@ -228,6 +235,7 @@ async function loadAdmin(){
   const parentSelect=document.getElementById('scheduleParent'),childSelect=document.getElementById('scheduleChild');
   parentSelect.onchange=()=>{const p=parents.find(x=>x.id===parentSelect.value);childSelect.innerHTML=p?(p.children||[]).map((c,i)=>`<option value="${i}">${esc(c.name)}</option>`).join(''):'<option value="">Select parent first</option>';};
   document.getElementById('scheduleForm').onsubmit=async ev=>{ev.preventDefault();const p=parents.find(x=>x.id===parentSelect.value),idx=Number(childSelect.value),c=p?.children?.[idx];if(!p||!c)return;try{await addDoc(collection(db,'schedules'),{parentUid:p.uid,parentDocId:p.id,parentName:p.name||'',childIndex:idx,childName:c.name,subject:document.getElementById('scheduleSubject').value,day:document.getElementById('scheduleDay').value,startTime:document.getElementById('scheduleStart').value,endTime:document.getElementById('scheduleEnd').value,tutorName:document.getElementById('scheduleTutor').value.trim(),tutorEmail:document.getElementById('scheduleTutorEmail').value.trim().toLowerCase(),location:document.getElementById('scheduleLocation').value.trim(),notes:document.getElementById('scheduleNotes').value.trim(),createdAt:serverTimestamp()});ev.target.reset();childSelect.innerHTML='<option value="">Select parent first</option>';msg('Schedule saved.','success');await loadAdmin();}catch(err){msg(errorText(err),'error');}};
+  setupAdminSections();
   await renderScheduleList();
   await renderPayments();
   bindPaymentForm();
@@ -259,6 +267,37 @@ async function loadAdmin(){
   msg('Admin signed in.','success');
  }catch(err){msg(errorText(err),'error');}
 }
+
+function setupAdminSections(){
+ const root=document.getElementById('adminData'); if(!root||root.dataset.menuReady)return;
+ root.dataset.menuReady='1';
+ const excel=root.querySelector('.excel-import');
+ const exportBtn=root.querySelector('#exportApprovedBtn')?.closest('.actions');
+ const regHeading=[...root.querySelectorAll('h3')].find(x=>x.textContent.startsWith('Registrations'));
+ const columns=root.querySelector('.admin-columns');
+ const hr=columns?.previousElementSibling;
+ const schedule=root.querySelector('#scheduleForm')?.closest('section.panel');
+ const payments=root.querySelector('#paymentForm')?.closest('section.panel');
+ const signout=[...root.querySelectorAll('.actions')].find(a=>a.querySelector('button[onclick="logout()"]'));
+ const menu=document.createElement('div');menu.className='admin-nav';
+ const sections=[
+  {key:'registrations',label:'👥 Registrations',hint:'Approve parents and tutors',nodes:[excel,exportBtn,regHeading,columns]},
+  {key:'schedules',label:'📅 Class Schedules',hint:'Create and manage lessons',nodes:[schedule]},
+  {key:'payments',label:'💳 Payments',hint:'Record and track tuition fees',nodes:[payments]}
+ ];
+ const sectionWrap=document.createElement('div');
+ sections.forEach(s=>{
+  const panel=document.createElement('section');panel.className='admin-section hidden';panel.dataset.adminSection=s.key;
+  const back=document.createElement('button');back.className='secondary admin-back';back.textContent='← Back to Admin Menu';back.onclick=()=>{panel.classList.add('hidden');menu.classList.remove('hidden');};
+  panel.append(back);
+  s.nodes.filter(Boolean).forEach(n=>{if(n===hr&&n.parentNode)n.remove();if(n.parentNode)n.parentNode.removeChild(n);panel.append(n);});
+  sectionWrap.append(panel);
+  const b=document.createElement('button');b.innerHTML='<strong>'+s.label+'</strong><br><small>'+s.hint+'</small>';b.onclick=()=>{menu.classList.add('hidden');panel.classList.remove('hidden');panel.scrollIntoView({behavior:'smooth'});};menu.append(b);
+ });
+ if(signout)root.removeChild(signout);
+ root.prepend(menu);root.append(sectionWrap);if(signout)root.append(signout);
+}
+
 async function renderPayments(){
  const list=document.getElementById('paymentsList'),summary=document.getElementById('paymentsSummary');if(!list||!summary)return;
  try{const snap=await getDocs(query(collection(db,'payments')));const records=snap.docs.map(d=>({id:d.id,...d.data()}));
