@@ -51,7 +51,7 @@ import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, updat
 const firebaseConfig={apiKey:"AIzaSyBDuD8LloKpKvJwdxOptXaamr0KjaQJyng",authDomain:"brightpath-tuition-c240b.firebaseapp.com",projectId:"brightpath-tuition-c240b",storageBucket:"brightpath-tuition-c240b.firebasestorage.app",messagingSenderId:"869976922467",appId:"1:869976922467:web:b88ab6c024e64ec7fe5b56"};
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
 const ADMIN_EMAIL="qsleepy151@gmail.com";
-const subjects=['Bahasa Melayu','Bahasa Inggeris','Matematik','Matematik Tambahan','Sejarah','Pendidikan Islam','Geografi','Sains','Biologi','Kimia','Fizik'];
+const subjects=['Malay','English','Mathematics','Additional Mathematics','History','Pendidikan Islam','Geography','Science','Biology','Chemistry','Physics'];
 document.getElementById('subjectDisplay').innerHTML=subjects.map(s=>`<div class="subject">${s}</div>`).join('');
 let currentRole='';
 const portalContent=document.getElementById('portalContent');
@@ -100,7 +100,7 @@ function userView(role){
  msg('Account created and registration submitted. Status: Pending.','success');await renderMine();
  }catch(err){msg(errorText(err),'error');}finally{btn.disabled=false;}};
  document.getElementById('forgotPasswordBtn').onclick=async()=>{const email=document.getElementById('loginEmail').value.trim();if(!email){msg('Please enter your email address above first.','error');return;}try{await sendPasswordResetEmail(auth,email);msg('Password reset email sent. Please check your inbox (and spam folder).','success');}catch(err){msg(errorText(err),'error');}};
- document.getElementById('loginForm').onsubmit=async e=>{e.preventDefault();try{const cred=await signInWithEmailAndPassword(auth,document.getElementById('loginEmail').value.trim(),document.getElementById('loginPassword').value);if(cred.user.email.toLowerCase()===ADMIN_EMAIL){await signOut(auth);msg('This is the admin account. Please use the Admin portal.','error');return;}await renderMine();msg('Signed in.','success');}catch(err){msg(errorText(err),'error');}};
+ document.getElementById('loginForm').onsubmit=async e=>{e.preventDefault();try{const cred=await signInWithEmailAndPassword(auth,document.getElementById('loginEmail').value.trim(),document.getElementById('loginPassword').value);if(cred.user.email.toLowerCase()===ADMIN_EMAIL){await signOut(auth);msg('This is the admin account. Please use the Admin portal.','error');return;}const roleSnap=await getDocs(query(collection(db,'registrations'),where('uid','==',cred.user.uid)));const roleMatches=roleSnap.docs.some(d=>d.data().role===currentRole);if(!roleMatches){await signOut(auth);msg('This account is registered as a '+(currentRole==='tutor'?'Parent':'Tutor')+'. Please sign in through the correct portal.','error');return;}await renderMine();msg('Signed in.','success');}catch(err){msg(errorText(err),'error');}};
 }
 async function renderMine(){
  const el=document.getElementById('myList');if(!el||!auth.currentUser)return;
