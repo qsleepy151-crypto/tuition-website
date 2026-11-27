@@ -26,7 +26,7 @@ footer{text-align:center;color:var(--muted);padding:24px}.notice{background:#fff
 
 .admin-nav{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:18px 0 22px}
 .admin-nav button{padding:18px;text-align:left;background:#F3E8FF;color:#374151;border:1px solid #E9D5FF}
-.admin-nav button:hover{background:#E9D5FF}
+.admin-nav button:hover{background:#E9D5FF}.admin-nav button{cursor:pointer;display:block;width:100%;}
 .admin-section{border:1px solid #e2e8f0;border-radius:16px;padding:18px;margin:12px 0;background:#fff}
 .admin-section-title{margin-top:0}
 .admin-back{margin-bottom:14px}
@@ -51,7 +51,7 @@ import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, updat
 const firebaseConfig={apiKey:"AIzaSyBDuD8LloKpKvJwdxOptXaamr0KjaQJyng",authDomain:"brightpath-tuition-c240b.firebaseapp.com",projectId:"brightpath-tuition-c240b",storageBucket:"brightpath-tuition-c240b.firebasestorage.app",messagingSenderId:"869976922467",appId:"1:869976922467:web:b88ab6c024e64ec7fe5b56"};
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
 const ADMIN_EMAIL="qsleepy151@gmail.com";
-const Subjek=['Bahasa Melayu','Bahasa Inggeris','Matematik','Matematik Tambahan','Sejarah','Pendidikan Islam','Geografi','Sains','Biologi','Kimia','Fizik'];
+const subjects=['Malay','English','Mathematics','Additional Mathematics','History','Pendidikan Islam','Geography','Science','Biology','Chemistry','Physics'];
 document.getElementById('subjectDisplay').innerHTML=subjects.map(s=>`<div class="subject">${s}</div>`).join('');
 let currentRole='';
 const portalContent=document.getElementById('portalContent');
@@ -288,11 +288,11 @@ function setupAdminSections(){
  const sectionWrap=document.createElement('div');
  sections.forEach(s=>{
   const panel=document.createElement('section');panel.className='admin-section hidden';panel.dataset.adminSection=s.key;
-  const back=document.createElement('button');back.className='secondary admin-back';back.textContent='← Back to Admin Menu';back.onclick=()=>{panel.classList.add('hidden');menu.classList.remove('hidden');};
+  const back=document.createElement('button');back.type='button';back.className='secondary admin-back';back.textContent='← Back to Admin Menu';back.onclick=()=>{panel.classList.add('hidden');menu.classList.remove('hidden');};
   panel.append(back);
   s.nodes.filter(Boolean).forEach(n=>{if(n===hr&&n.parentNode)n.remove();if(n.parentNode)n.parentNode.removeChild(n);panel.append(n);});
   sectionWrap.append(panel);
-  const b=document.createElement('button');b.innerHTML='<strong>'+s.label+'</strong><br><small>'+s.hint+'</small>';b.onclick=()=>{menu.classList.add('hidden');panel.classList.remove('hidden');panel.scrollIntoView({behavior:'smooth'});};menu.append(b);
+  const b=document.createElement('button');b.type='button';b.innerHTML='<strong>'+s.label+'</strong><br><small>'+s.hint+'</small>';b.onclick=()=>{menu.classList.add('hidden');panel.classList.remove('hidden');};menu.append(b);
  });
  if(signout)root.removeChild(signout);
  root.prepend(menu);root.append(sectionWrap);if(signout)root.append(signout);
