@@ -111,6 +111,17 @@ async function renderMine(){
     html+=`<div class="item"><h3>Tutor profile · ${esc(r.name)} · ${statusBadge(r.status)}</h3><p>${esc(r.email)}</p><p>Subjects: ${(r.subjects||[]).map(s=>`<span class="tag">${esc(s)}</span>`).join('')||'None selected'}</p><p>Availability: ${esc(r.schedule||'Not specified')}</p><p>${esc(r.bio||'')}</p></div>`;
    }
   }
+  if(docs.some(d=>d.data().role==='parent')){
+   try{
+    const paymentSnap=await getDocs(query(collection(db,'payments'),where('parentEmail','==',auth.currentUser.email.toLowerCase())));
+    const paymentRows=paymentSnap.docs.map(pd=>pd.data());
+    const totalDue=paymentRows.reduce((sum,p)=>sum+Number(p.amountDue||p.amount||0),0);
+    const totalPaid=paymentRows.reduce((sum,p)=>sum+Number(p.amountPaid||0),0);
+    html+='<h3>💳 Tuition payments</h3>';
+    html+=`<div class="item"><strong>Total due:</strong> RM ${totalDue.toFixed(2)} &nbsp; <strong>Paid:</strong> RM ${totalPaid.toFixed(2)} &nbsp; <strong>Outstanding:</strong> RM ${(totalDue-totalPaid).toFixed(2)}</div>`;
+    html+=paymentRows.map(p=>{const due=Number(p.amountDue||p.amount||0),paid=Number(p.amountPaid||0);return `<div class="item"><h4>${esc(p.childName||'')} · ${esc(p.month||p.description||'')}</h4><p>Amount due: RM ${due.toFixed(2)} · Paid: RM ${paid.toFixed(2)} · Balance: RM ${(due-paid).toFixed(2)}</p><p>Status: ${esc(p.status||'Pending')} · Payment date: ${esc(p.paymentDate||'')} · Method: ${esc(p.paymentMethod||'')}</p><p>${esc(p.notes||'')}</p></div>`;}).join('')||'<p class="muted">No payment records yet.</p>';
+   }catch(paymentError){html+='<h3>💳 Tuition payments</h3><p class="muted">Payment details are not currently available.</p>';}
+  }
   const schedSnap=await getDocs(query(collection(db,'schedules'),where('parentUid','==',auth.currentUser.uid)));
   if(!schedSnap.empty){
    html+='<h3>Upcoming tuition schedule</h3>';
