@@ -51,7 +51,7 @@ import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, updat
 const firebaseConfig={apiKey:"AIzaSyBDuD8LloKpKvJwdxOptXaamr0KjaQJyng",authDomain:"brightpath-tuition-c240b.firebaseapp.com",projectId:"brightpath-tuition-c240b",storageBucket:"brightpath-tuition-c240b.firebasestorage.app",messagingSenderId:"869976922467",appId:"1:869976922467:web:b88ab6c024e64ec7fe5b56"};
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
 const ADMIN_EMAIL="qsleepy151@gmail.com";
-const subjects=['Malay','English','Mathematics','Additional Mathematics','History','Pendidikan Islam','Geography','Science','Biology','Chemistry','Physics'];
+const subjects=['Bahasa Melayu','Bahasa Inggeris','Matematik','Matematik Tambahan','Geografi','Sejarah','Biologi','Pendidikan Islam'];
 document.getElementById('subjectDisplay').innerHTML=subjects.map(s=>`<div class="subject">${s}</div>`).join('');
 let currentRole='';
 const portalContent=document.getElementById('portalContent');
